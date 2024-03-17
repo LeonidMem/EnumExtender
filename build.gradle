@@ -1,0 +1,83 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+def enumExtenderGroupId = 'ru.leonidm'
+def enumExtenderArtifactId = 'enum-extender'
+def enumExtenderVersion = '0.1.0'
+
+group enumExtenderGroupId
+version enumExtenderVersion
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 17
+targetCompatibility = 17
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+tasks.withType(Javadoc).configureEach { options.encoding = 'UTF-8' }
+
+dependencies {
+    implementation 'org.jetbrains:annotations:24.0.1'
+
+    compileOnly 'org.projectlombok:lombok:1.18.26'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.26'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+javadoc {
+    source = sourceSets.main.allJava
+    classpath = configurations.compileClasspath
+    options {
+        setMemberLevel JavadocMemberLevel.PUBLIC
+        setAuthor true
+
+        links "https://docs.oracle.com/javase/8/docs/api/"
+    }
+}
+
+tasks.register('sourceJar', Jar) {
+    archiveClassifier.set("sources")
+    from sourceSets.main.allJava
+}
+
+tasks.register('packageJavadoc', Jar) {
+    archiveClassifier.set("javadoc")
+    from javadoc
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = enumExtenderGroupId
+            artifactId = enumExtenderArtifactId
+            version = enumExtenderVersion
+
+            from components.java
+            artifact sourceJar
+            artifact packageJavadoc
+        }
+    }
+    repositories {
+        maven {
+            name = "smashUpRepository"
+            url "https://mvn.smashup.ru/releases"
+            credentials(PasswordCredentials)
+            authentication {
+                basic(BasicAuthentication)
+            }
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
