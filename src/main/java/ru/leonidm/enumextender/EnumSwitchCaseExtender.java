@@ -25,7 +25,7 @@ public final class EnumSwitchCaseExtender {
      * and extends arrays inside them if needed (right now only default values are supported).
      * @param enumClass enumeration class that must be extended
      * @param classLoader class loader whose switch/case synthetic classes must be extended
-     * @param extendParents if true also parents of provided class loader will be extended
+     * @param extendParents if true also parents of the class loader will be extended
      */
     public static <E extends Enum<E>> void extend(@NotNull Class<E> enumClass, @NotNull ClassLoader classLoader,
                                                   boolean extendParents) {

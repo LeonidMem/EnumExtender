@@ -1,6 +1,7 @@
 package ru.leonidm.enumextender.utils;
 
 import lombok.SneakyThrows;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
@@ -130,7 +131,7 @@ public final class UnsafeUtils {
             } else if (field.getType() == char.class) {
                 UNSAFE.putCharVolatile(object, fieldOffset, cast(value, field));
             } else {
-                UNSAFE.putObjectVolatile(object, fieldOffset, value);
+                UNSAFE.putObjectVolatile(object, fieldOffset, castObject(value, field));
             }
         } else {
             if (field.getType() == boolean.class) {
@@ -150,7 +151,7 @@ public final class UnsafeUtils {
             } else if (field.getType() == char.class) {
                 UNSAFE.putChar(object, fieldOffset, cast(value, field));
             } else {
-                UNSAFE.putObject(object, fieldOffset, value);
+                UNSAFE.putObject(object, fieldOffset, castObject(value, field));
             }
         }
     }
@@ -169,6 +170,17 @@ public final class UnsafeUtils {
                     .formatted(field, field.getType(), value, value.getClass()));
         }
     }
+
+    @Contract("_, _ -> param1")
+    private static <T> T castObject(@Nullable Object value, @NotNull Field field) {
+        if (value != null && !field.getType().isAssignableFrom(value.getClass())) {
+            throw new IllegalArgumentException("Field %s requires %s, got %s (class = %s)"
+                    .formatted(field, field.getType(), value, value.getClass()));
+        }
+
+        return (T) value;
+    }
+
 
     /**
      * Allocates an instance but does not run any constructor. Initializes the class if it has not yet been.

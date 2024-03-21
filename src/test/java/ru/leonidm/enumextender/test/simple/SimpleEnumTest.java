@@ -17,7 +17,7 @@ public class SimpleEnumTest {
     public void simpleEnum() {
         SimpleEnum[] values = SimpleEnum.values();
 
-        assertThrowsExactly(IllegalStateException.class, () -> {
+        assertThrowsExactly(IllegalArgumentException.class, () -> {
             EnumExtender.extend(SimpleEnum.class, "C", Map.of());
         }, "Enum with name '%s' is already defined in %s".formatted("C", SimpleEnum.class));
 

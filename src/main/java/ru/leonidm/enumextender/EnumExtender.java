@@ -32,14 +32,18 @@ public final class EnumExtender {
     @NotNull
     public static <E extends Enum<E>> E extend(@NotNull Class<E> enumClass, @NotNull String enumName,
                                                @NotNull Map<String, Object> fieldValues) throws IllegalArgumentException {
+        E e = null;
         try {
-            Enum.valueOf(enumClass, enumName);
-            throw new IllegalArgumentException("Enum with name '%s' is already defined in %s".formatted(enumName, enumClass));
+            e = Enum.valueOf(enumClass, enumName);
         } catch (IllegalArgumentException ignored) {
 
         }
 
-        E e = UnsafeUtils.allocateInstance(enumClass);
+        if (e != null) {
+            throw new IllegalArgumentException("Enum with name '%s' is already defined in %s".formatted(enumName, enumClass));
+        }
+
+        e = UnsafeUtils.allocateInstance(enumClass);
 
         Field valuesField = ReflectionUtils.findValuesField(enumClass);
         E[] values = UnsafeUtils.getStaticFieldSafely(valuesField);

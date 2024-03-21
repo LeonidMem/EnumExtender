@@ -1,7 +1,7 @@
 # EnumExtender
 
 EnumExtender is a lightweight library that allows you to gracefully extend any enumeration with minimal compatibility
-issues in the runtime. This library is useful when you are using bad-designed external code and, for example,
+issues at the runtime. This library is useful when you are using bad-designed external code and, for example,
 want to extend its functionality depending on some configurations.
 
 # Importing
@@ -20,7 +20,7 @@ want to extend its functionality depending on some configurations.
   <dependency>
     <groupId>ru.leonidm</groupId>
     <artifactId>enum-extender</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
   </dependency>
 </dependencies>
 ```
@@ -32,7 +32,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'ru.leonidm:enum-extender:0.1.0'
+  implementation 'ru.leonidm:enum-extender:0.1.1'
 }
 ```
 
@@ -89,7 +89,7 @@ public enum SwitchCaseEnum {
 SwitchCaseEnum d = EnumExtender.extend(SwitchCaseEnum.class, "D", Map.of());
 
 // Provided class loader is class loader whose switch/case synthetic classes must be extended
-// If last argument is true, also parents of provided class loader will be extended
+// If last argument is true, also parents of the class loader will be extended
 EnumSwitchCaseExtender.extend(SwitchCaseEnum.class, getClass().getClassLoader(), true);
 ```
 
