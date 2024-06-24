@@ -23,14 +23,24 @@ public class SwitchCaseTest {
             int ordinal = e.ordinal();
             assertEquals(ordinal, switchWithDefault(e));
             assertEquals(ordinal, switchWithoutDefault(e));
+            assertEquals(ordinal, enhancedSwitchWithDefault(e));
+            assertEquals(ordinal, enhancedSwitchWithoutDefault(e));
             assertEquals(ordinal, returnEnhancedSwitchWithDefault(e));
             assertEquals(ordinal, returnEnhancedSwitchWithoutDefault(e));
             assertEquals(ordinal, returnEnhancedSwitchWithAllAndDefault(e));
         }
 
         SwitchCaseEnum d = EnumExtender.extend(SwitchCaseEnum.class, "D", Map.of());
+        SwitchCaseEnum e = EnumExtender.extend(SwitchCaseEnum.class, "E", Map.of());
 
-        EnumSwitchCaseExtender.extend(SwitchCaseEnum.class, getClass().getClassLoader(), true);
+        EnumSwitchCaseExtender.extend(SwitchCaseEnum.class, getClass().getClassLoader(),
+                (originalClass) -> {
+                    if (originalClass == SwitchCaseTest.class) {
+                        return Map.of(e, SwitchCaseEnum.A);
+                    } else {
+                        return Map.of();
+                    }
+                }, true);
 
         assertEquals(2, switchWithDefault(d));
         assertEquals(-1, switchWithoutDefault(d));
@@ -44,6 +54,15 @@ public class SwitchCaseTest {
             returnEnhancedSwitchWithoutDefault(d);
         });
         assertEquals(3, returnEnhancedSwitchWithAllAndDefault(d));
+
+
+        assertEquals(0, switchWithDefault(e));
+        assertEquals(0, switchWithoutDefault(e));
+        assertEquals(0, enhancedSwitchWithDefault(e));
+        assertEquals(0, enhancedSwitchWithoutDefault(e));
+        assertEquals(0, returnEnhancedSwitchWithDefault(e));
+        assertEquals(0, returnEnhancedSwitchWithoutDefault(e));
+        assertEquals(0, returnEnhancedSwitchWithAllAndDefault(e));
     }
 
     private int switchWithDefault(@NotNull SwitchCaseEnum e) {
@@ -58,7 +77,7 @@ public class SwitchCaseTest {
             default:
                 result = 2;
                 break;
-        };
+        }
 
         return result;
     }
@@ -75,7 +94,7 @@ public class SwitchCaseTest {
             case C:
                 result = 2;
                 break;
-        };
+        }
 
         return result;
     }

@@ -49,12 +49,13 @@ public final class ClassLoaderUtils {
      * Gets loaded classes by the provided class loader and sends them in the provided consumer.
      * This method provides multi-thread safety, because the JVM adds each loaded class in
      * the list synchronizing with it.
+     *
      * @param consumer consumer of the loaded classes
      * @throws IllegalStateException if JVM is somehow broken
      */
     public static void getClassesSynchronized(@NotNull ClassLoader classLoader, @NotNull Consumer<List<Class<?>>> consumer) {
         List<Class<?>> classes = UnsafeUtils.getFieldSafely(classLoader, getClassesField());
-        synchronized (classes)  {
+        synchronized (classes) {
             consumer.accept(Collections.unmodifiableList(classes));
         }
     }
@@ -64,6 +65,7 @@ public final class ClassLoaderUtils {
      * separately for each class loader.
      * This method provides multi-thread safety, because the JVM adds each loaded class in
      * the list synchronizing with it.
+     *
      * @param consumer consumer of the loaded classes
      * @throws IllegalStateException if JVM is somehow broken
      */

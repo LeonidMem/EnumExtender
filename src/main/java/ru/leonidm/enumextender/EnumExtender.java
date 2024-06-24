@@ -20,14 +20,15 @@ public final class EnumExtender {
     /**
      * Creates new instance of enumeration, pushes it into the values array,
      * clears cache for enum constants and updates enum constant directory.
-     * @param enumClass enumeration class that must be extended
-     * @param enumName new of new enumeration instance
+     *
+     * @param enumClass   enumeration class that must be extended
+     * @param enumName    new of new enumeration instance
      * @param fieldValues map that contains names of the fields declared in the enumeration class and
      *                    corresponding values. If some field is not specified in the map,
      *                    it will contain default value (0 for primitives, null for objects)
-     * @throws IllegalArgumentException if enum with such name exists
-     * @throws IllegalStateException if JVM is somehow broken
      * @return created instance of enumeration
+     * @throws IllegalArgumentException if enum with such name exists
+     * @throws IllegalStateException    if JVM is somehow broken
      */
     @NotNull
     public static <E extends Enum<E>> E extend(@NotNull Class<E> enumClass, @NotNull String enumName,

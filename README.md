@@ -20,7 +20,7 @@ want to extend its functionality depending on some configurations.
   <dependency>
     <groupId>ru.leonidm</groupId>
     <artifactId>enum-extender</artifactId>
-    <version>0.1.1</version>
+    <version>0.1.2</version>
   </dependency>
 </dependencies>
 ```
@@ -32,7 +32,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'ru.leonidm:enum-extender:0.1.1'
+  implementation 'ru.leonidm:enum-extender:0.1.2'
 }
 ```
 
@@ -88,15 +88,25 @@ public enum SwitchCaseEnum {
 ```java
 SwitchCaseEnum d = EnumExtender.extend(SwitchCaseEnum.class, "D", Map.of());
 
+// Mapper is used to select branches for new enumerations
+EnumSwitchCaseExtender.Mapper mapper = (originalClass) -> {
+    if (originalClass == SwitchCaseTest.class) {
+        return Map.of(d, SwitchCaseEnum.A);
+    } else {
+        return Map.of();
+    }
+};
+
 // Provided class loader is class loader whose switch/case synthetic classes must be extended
+// Mapper argument can be null
 // If last argument is true, also parents of the class loader will be extended
-EnumSwitchCaseExtender.extend(SwitchCaseEnum.class, getClass().getClassLoader(), true);
+EnumSwitchCaseExtender.extend(SwitchCaseEnum.class, getClass().getClassLoader(), mapper, true);
 ```
 
 ### [!] Restriction
 
-Right now all enumerations that were created by extension in switch/case will just fall back to the default branch,
-but, unfortunately, all switch/case are working fine excluding this one:
+Right now all enumerations that were created by extension in switch/case without and that are not mapped will just
+fall back to the default branch, but, unfortunately, all switch/case are working fine excluding this one:
 
 ```java
 private int returnEnhancedSwitchWithoutDefault(SwitchCaseEnum e) {
@@ -110,7 +120,7 @@ private int returnEnhancedSwitchWithoutDefault(SwitchCaseEnum e) {
 
 Somehow, JDK allows such switch/case to exist, which, to me, is a little bit strange, because all types, except
 especially this one, are backwards compatible. In the bytecode `IncompatibleClassChangeError` is hardcoded on
-the default branch for this, so there is only one solution — give the user the opportunity to select the correct branch.
+the default branch for this, so there is only one solution — select branch from all other existing ones.
 
 # Known issues:
 * `IncompatibleClassChangeError` in enhanced switch/cases as described above
@@ -118,6 +128,5 @@ the default branch for this, so there is only one solution — give the user the
 * `EnumSets` and `EnumMaps` that were created before extension will be broken
 
 # TODO:
-* Add API to fill switch/case branches for new enumerations not only with default values
 * Add API to extend abstract enumerations
 * Somehow create an approach to fix all `EnumSets` and `EnumMaps`
