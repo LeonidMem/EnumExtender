@@ -1,4 +1,4 @@
-package ru.leonidm.enumextender.utils;
+package ru.leonidm.enumextender.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,7 @@ public final class ReflectionUtils {
      * @param enumClass enumeration class where values field must be found
      */
     @NotNull
-    public static <E extends Enum<E>> Field findValuesField(@NotNull Class<E> enumClass) {
+    public static Field findValuesField(@NotNull Class<? extends Enum<?>> enumClass) {
         Field field = null;
         String currentName = "$VALUES";
         while (true) {

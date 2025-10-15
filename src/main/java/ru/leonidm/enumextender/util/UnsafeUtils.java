@@ -1,4 +1,4 @@
-package ru.leonidm.enumextender.utils;
+package ru.leonidm.enumextender.util;
 
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.Contract;

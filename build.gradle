@@ -5,7 +5,7 @@ plugins {
 
 def enumExtenderGroupId = 'ru.leonidm'
 def enumExtenderArtifactId = 'enum-extender'
-def enumExtenderVersion = '0.1.2'
+def enumExtenderVersion = '1.0.0'
 
 group enumExtenderGroupId
 version enumExtenderVersion
@@ -22,6 +22,8 @@ tasks.withType(Javadoc).configureEach { options.encoding = 'UTF-8' }
 
 dependencies {
     implementation 'org.jetbrains:annotations:24.0.1'
+
+    implementation 'io.github.classgraph:classgraph:4.8.181'
 
     compileOnly 'org.projectlombok:lombok:1.18.26'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'

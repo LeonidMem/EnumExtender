@@ -1,19 +1,21 @@
 package ru.leonidm.enumextender.test.switchcase;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
-
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
-import ru.leonidm.enumextender.EnumExtender;
-import ru.leonidm.enumextender.EnumSwitchCaseExtender;
+import ru.leonidm.enumextender.api.EnumExtender;
+import ru.leonidm.enumextender.api.SwitchCasePatcher;
 
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
 /**
  * @author LeonidM
  */
 public class SwitchCaseTest {
+
+    private final EnumExtender<SwitchCaseEnum> enumExtender = EnumExtender.of(SwitchCaseEnum.class);
 
     @Test
     public void switchCase() {
@@ -30,17 +32,20 @@ public class SwitchCaseTest {
             assertEquals(ordinal, returnEnhancedSwitchWithAllAndDefault(e));
         }
 
-        SwitchCaseEnum d = EnumExtender.extend(SwitchCaseEnum.class, "D", Map.of());
-        SwitchCaseEnum e = EnumExtender.extend(SwitchCaseEnum.class, "E", Map.of());
+        SwitchCaseEnum d = enumExtender.enumBuilder("D").create().getEnum();
+        SwitchCaseEnum e = enumExtender.enumBuilder("E").create().getEnum();
 
-        EnumSwitchCaseExtender.extend(SwitchCaseEnum.class, getClass().getClassLoader(),
-                (originalClass) -> {
-                    if (originalClass == SwitchCaseTest.class) {
-                        return Map.of(e, SwitchCaseEnum.A);
-                    } else {
-                        return Map.of();
-                    }
-                }, true);
+        enumExtender.switchCase()
+                .addPatcher(SwitchCasePatcher.mappings(
+                        (originalClass) -> {
+                            if (originalClass == SwitchCaseTest.class) {
+                                return Map.of(e, SwitchCaseEnum.A);
+                            } else {
+                                return Map.of();
+                            }
+                        }
+                ))
+                .patch(getClass().getClassLoader(), true);
 
         assertEquals(2, switchWithDefault(d));
         assertEquals(-1, switchWithoutDefault(d));

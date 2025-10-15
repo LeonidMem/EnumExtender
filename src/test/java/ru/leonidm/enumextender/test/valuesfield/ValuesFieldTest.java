@@ -1,20 +1,22 @@
 package ru.leonidm.enumextender.test.valuesfield;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-
 import org.junit.jupiter.api.Test;
-import ru.leonidm.enumextender.EnumExtender;
+import ru.leonidm.enumextender.api.EnumExtender;
 
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 /**
  * @author LeonidM
  */
 public class ValuesFieldTest {
 
+    private final EnumExtender<ValuesFieldEnum> enumExtender = EnumExtender.of(ValuesFieldEnum.class);
+
     @Test
     public void valuesField() {
-        ValuesFieldEnum d = EnumExtender.extend(ValuesFieldEnum.class, "D", Map.of());
+        ValuesFieldEnum d = enumExtender.addEnum("D", Map.of()).getEnum();
 
         ValuesFieldEnum[] expected = {ValuesFieldEnum.A, ValuesFieldEnum.B, ValuesFieldEnum.C};
         assertArrayEquals(expected, ValuesFieldEnum.$VALUES);

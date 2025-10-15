@@ -20,7 +20,7 @@ want to extend its functionality depending on some configurations.
   <dependency>
     <groupId>ru.leonidm</groupId>
     <artifactId>enum-extender</artifactId>
-    <version>0.1.2</version>
+    <version>1.0.0</version>
   </dependency>
 </dependencies>
 ```
@@ -32,11 +32,16 @@ repositories {
 }
 
 dependencies {
-  implementation 'ru.leonidm:enum-extender:0.1.2'
+  implementation 'ru.leonidm:enum-extender:1.0.0'
 }
 ```
 
 # Usage
+
+## Add `-add-opens` flag
+```sh
+java --add-opens=java.base/java.lang=ALL-UNNAMED -jar my.jar```
+```
 
 ## Simple extension of enumerations
 ```java
@@ -46,36 +51,53 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum SimpleEnum {
-    A(3, true, "AA"),
-    B(2, false, "BB"),
-    C(1, true, "CC");
+    A(4, true, "AA"),
+    B(3, false, "BB"),
+    C(2, true, "CC"),
+    E(0, true, "EE");
 
-    private final int integer;
-    private final boolean bool;
-    private final String string;
+    public final int integer;
+    public final boolean bool;
+    public final String string;
 }
 ```
 
 ```java
-// Provided map contains names of the fields declared in the enumeration class
-// and corresponding values. If some field is not specified in the map,
-// it will contain default value (0 for primitives, null for objects)
-FieldEnum d = EnumExtender.extend(FieldEnum.class, "D", Map.of(
-        "integer", -1,
-        "bool", true,
-        "string", "DD"
-));
+EnumExtender<SimpleEnum> enumExtender = EnumExtender.of(SimpleEnum.class);
+SimpleEnum f = enumExtender.enumBuilder("F")
+        // If some field is not specified in the map, it will contain
+        // default value (0 for primitives, null for objects)
+        .setField("integer", -1)
+        .setField("bool", true)
+        .setField("string", "FF")
+        .create()
+        .getEnum();
 
-assert d == FieldEnum.valueOf("D"); // true
-assert d == FieldEnum.values()[d.ordinal()]; // true
-assert d.integer == -1; // true
-assert d.bool == true; // true
-assert d.string.equals("DD"); // true
+assert f.integer == -1; // true
+assert f.bool == true; // true
+assert f.string.equals("FF"); // true
+assert f.ordinal() == 4; // true
+assert f == SimpleEnum.valueOf("F"); // true
+assert f == SimpleEnum.values()[f.ordinal()]; // true
+
+// Also, it is possible to insert enumeration at the middle of values
+// After this operation, you MUST use patcher to fix broken switch-case branches
+SimpleEnum d = enumExtender.enumBuilder("D")
+        .insertBefore(SimpleEnum.E)
+        .create()
+        .getEnum();
+
+assert d.ordinal() == 3; // true
+assert d == SimpleEnum.values()[3]; // true
+
+// Ordinal of all next enumerations after new one are also changed
+assert SimpleEnum.E.ordinal() == 4; // true
+assert f.ordinal() == 5; // true
 ```
 
-## Fix of broken switch/case branches
+## Fix of broken switch-case branches
 
-Switch/case branches can be broken if they were used before the extension. In such cases you must do the following:
+Switch-case branches can be broken if they were used before the extension. In such cases you must do the following:
 
 ```java
 public enum SwitchCaseEnum {
@@ -86,27 +108,39 @@ public enum SwitchCaseEnum {
 ```
 
 ```java
-SwitchCaseEnum d = EnumExtender.extend(SwitchCaseEnum.class, "D", Map.of());
+EnumExtender<SwitchCaseEnum> enumExtender = EnumExtender.of(SwitchCaseEnum.class);
+SwitchCaseEnum d = enumExtender.enumBuilder("D")
+        .create()
+        .getEnum();
 
-// Mapper is used to select branches for new enumerations
-EnumSwitchCaseExtender.Mapper mapper = (originalClass) -> {
-    if (originalClass == SwitchCaseTest.class) {
-        return Map.of(d, SwitchCaseEnum.A);
-    } else {
-        return Map.of();
-    }
-};
+// SwitchCasePatcher is interface, so you can implement it by yourself,
+// but patcher below is sufficient in many cases, because it is used
+// to select branches for new enumerations
+SwitchCasePatcher patcher = SwitchCasePatcher.mappings(
+        (originalClass) -> { // Class where switch-case was found
+            if (originalClass == SwitchCaseTest.class) {
+                return Map.of(d, SwitchCaseEnum.A); // For enum D, follow A branch 
+            } else {
+                return Map.of();
+            }
+        }
+);
 
-// Provided class loader is class loader whose switch/case synthetic classes must be extended
-// Mapper argument can be null
-// If last argument is true, also parents of the class loader will be extended
-EnumSwitchCaseExtender.extend(SwitchCaseEnum.class, getClass().getClassLoader(), mapper, true);
+enumExtender.switchCase()
+        .addPatcher(patcher)
+        // Provided class loader is class loader whose switch-case synthetic classes must be extended
+        // If last argument is true, also parents of the class loader will be extended
+        .patch(patcher.getClass().getClassLoader(), true);
 ```
+
+**[!!!]** Right now, this library can patch only loaded classes. As temp solution, you can use
+[ClassGraph](https://github.com/classgraph/classgraph) to find all switch-case classes and load them before patching.
+This problem will be fixed later in this library by implementing Java agent that patches bytecode of such classes.
 
 ### [!] Restriction
 
-Right now all enumerations that were created by extension in switch/case without and that are not mapped will just
-fall back to the default branch, but, unfortunately, all switch/case are working fine excluding this one:
+Right now all enumerations that were created by extension in switch-case without and that are not mapped will just
+fall back to the default branch, but, unfortunately, all switch-case are working fine excluding this one:
 
 ```java
 private int returnEnhancedSwitchWithoutDefault(SwitchCaseEnum e) {
@@ -118,12 +152,12 @@ private int returnEnhancedSwitchWithoutDefault(SwitchCaseEnum e) {
 }
 ```
 
-Somehow, JDK allows such switch/case to exist, which, to me, is a little bit strange, because all types, except
+Somehow, JDK allows such switch-case to exist, which, to me, is a little bit strange, because all types, except
 especially this one, are backwards compatible. In the bytecode `IncompatibleClassChangeError` is hardcoded on
 the default branch for this, so there is only one solution — select branch from all other existing ones.
 
 # Known issues:
-* `IncompatibleClassChangeError` in enhanced switch/cases as described above
+* `IncompatibleClassChangeError` in enhanced switch-cases as described above
 * Abstract enumeration cannot be initialized
 * `EnumSets` and `EnumMaps` that were created before extension will be broken
 
