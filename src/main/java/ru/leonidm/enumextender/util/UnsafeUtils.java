@@ -28,6 +28,14 @@ public final class UnsafeUtils {
     }
 
     /**
+     * Checks whether static initializer of the provided class has completed.
+     */
+    @SuppressWarnings("removal")
+    public static boolean isInitialized(@NotNull Class<?> clazz) {
+        return !UNSAFE.shouldBeInitialized(clazz);
+    }
+
+    /**
      * Gets value from the provided static field using {@link Unsafe} class as safely as possible.
      * It is very useful when working with highly protected fields.
      */

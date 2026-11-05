@@ -58,7 +58,7 @@ public final class ReflectionUtils {
 
         try {
             String mainName = name.substring(0, name.lastIndexOf('$'));
-            return Class.forName(mainName);
+            return Class.forName(mainName, false, syntheticClass.getClassLoader());
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }

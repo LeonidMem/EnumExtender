@@ -2,20 +2,23 @@ package ru.leonidm.enumextender.api;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnmodifiableView;
 import ru.leonidm.enumextender.util.ReflectionUtils;
 import ru.leonidm.enumextender.util.UnsafeUtils;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author LeonidM
  */
 public final class EnumExtender<E extends Enum<E>> {
 
-    private static final Map<Class<? extends Enum<?>>, EnumExtender<?>> EXTENDERS = new HashMap<>();
+    private static final Map<Class<? extends Enum<?>>, EnumExtender<?>> EXTENDERS = new ConcurrentHashMap<>();
 
     private final Class<E> enumClass;
     private final EnumSwitchCaseExtender<E> enumSwitchCaseExtender;
@@ -122,6 +125,7 @@ public final class EnumExtender<E extends Enum<E>> {
                 System.arraycopy(values, 0, newValues, 0, values.length);
 
                 ordinal = values.length;
+                enumSwitchCaseExtender.addPatcher(SwitchCasePatcher.insert(ordinal, values.length));
             } else {
                 System.arraycopy(values, 0, newValues, 0, ordinal);
                 System.arraycopy(values, ordinal, newValues, ordinal + 1, values.length - ordinal);
@@ -160,9 +164,14 @@ public final class EnumExtender<E extends Enum<E>> {
         return enumSwitchCaseExtender;
     }
 
-
     @NotNull
     public Class<E> getEnumClass() {
         return enumClass;
+    }
+
+    @NotNull
+    @UnmodifiableView
+    public static Collection<EnumExtender<?>> getExtenders() {
+        return Collections.unmodifiableCollection(EXTENDERS.values());
     }
 }

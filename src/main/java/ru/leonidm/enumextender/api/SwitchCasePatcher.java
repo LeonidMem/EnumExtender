@@ -46,7 +46,7 @@ public interface SwitchCasePatcher<E extends Enum<E>> {
                         E key = entry.getKey();
                         E value = entry.getValue();
 
-                        ordinalArray[key.ordinal()] = value != null ? value.ordinal() + 1 : 0;
+                        ordinalArray[key.ordinal()] = value != null ? ordinalArray[value.ordinal()] : 0;
                     }
                 }
                 return ordinalArray;

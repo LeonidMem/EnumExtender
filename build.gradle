@@ -5,7 +5,7 @@ plugins {
 
 def enumExtenderGroupId = 'ru.leonidm'
 def enumExtenderArtifactId = 'enum-extender'
-def enumExtenderVersion = '1.0.0'
+def enumExtenderVersion = '1.1.0'
 
 group enumExtenderGroupId
 version enumExtenderVersion
@@ -23,7 +23,7 @@ tasks.withType(Javadoc).configureEach { options.encoding = 'UTF-8' }
 dependencies {
     implementation 'org.jetbrains:annotations:24.0.1'
 
-    implementation 'io.github.classgraph:classgraph:4.8.181'
+    implementation 'org.ow2.asm:asm:9.2'
 
     compileOnly 'org.projectlombok:lombok:1.18.26'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
@@ -80,6 +80,18 @@ publishing {
     }
 }
 
+jar {
+    manifest {
+        attributes(
+                'Premain-Class': 'ru.leonidm.enumextender.instrument.EnumExtenderAgent',
+                'Agent-Class': 'ru.leonidm.enumextender.instrument.EnumExtenderAgent',
+                'Can-Redefine-Classes': 'true',
+                'Can-Retransform-Classes': 'true'
+        )
+    }
+}
+
 test {
     useJUnitPlatform()
+    jvmArgs '--add-opens=java.base/java.lang=ALL-UNNAMED', '-Xbatch'
 }

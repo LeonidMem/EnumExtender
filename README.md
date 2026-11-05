@@ -20,7 +20,7 @@ want to extend its functionality depending on some configurations.
   <dependency>
     <groupId>ru.leonidm</groupId>
     <artifactId>enum-extender</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
   </dependency>
 </dependencies>
 ```
@@ -32,16 +32,31 @@ repositories {
 }
 
 dependencies {
-  implementation 'ru.leonidm:enum-extender:1.0.0'
+  implementation 'ru.leonidm:enum-extender:1.1.0'
 }
 ```
 
 # Usage
 
-## Add `-add-opens` flag
+## JVM flags
+
+Without instrumentation (see [below](#fix-of-broken-switch-case-branches)) the library reads loaded classes from
+the private field of `ClassLoader`, so `java.lang` must be opened:
+
 ```sh
-java --add-opens=java.base/java.lang=ALL-UNNAMED -jar my.jar```
+java --add-opens=java.base/java.lang=ALL-UNNAMED -jar my.jar
 ```
+
+If `EnumInstrumentation` is installed before the first patch, this flag is not required.
+However, it is still recommended to keep it for the cases when the agent could not be loaded.
+
+To load the agent with `EnumInstrumentation.installAgent()`, the JDK is required. It is also recommended to enable flag:
+```sh
+java -Djdk.attach.allowAttachSelf=true -jar my.jar
+```
+
+Both flags are not needed if the library jar is passed as an agent: `-javaagent:enum-extender.jar`
+(`EnumInstrumentation.installAgent()` must still be called, then it uses instrumentation of this agent).
 
 ## Simple extension of enumerations
 ```java
@@ -133,9 +148,23 @@ enumExtender.switchCase()
         .patch(patcher.getClass().getClassLoader(), true);
 ```
 
-**[!!!]** Right now, this library can patch only loaded classes. As temp solution, you can use
-[ClassGraph](https://github.com/classgraph/classgraph) to find all switch-case classes and load them before patching.
-This problem will be fixed later in this library by implementing Java agent that patches bytecode of such classes.
+**[!!!]** Without instrumentation this library can patch only loaded classes, and JIT-compiled code
+that was compiled before the patch sometimes keeps old switch-case arrays as constants, so it can
+throw `ArrayIndexOutOfBoundsException` for new enumerations. Install instrumentation before the first
+patch to fix both problems:
+
+```java
+// Loads agent into the current JVM (JDK is required, see "JVM flags"),
+// or use EnumInstrumentation.install(Instrumentation) if you already have Instrumentation
+EnumInstrumentation.installAgent();
+```
+
+After installation:
+* `patch(...)` retransforms classes that use patched arrays, so JIT-compiled code is deoptimized;
+* switch-case classes loaded later are patched at the end of their static initializers by all added patchers.
+
+The library jar itself is also an agent (`-javaagent:enum-extender.jar`), then `installAgent()` uses its
+instrumentation. Bytecode is transformed with [ASM](https://asm.ow2.io/), which must be available at runtime.
 
 ### [!] Restriction
 
